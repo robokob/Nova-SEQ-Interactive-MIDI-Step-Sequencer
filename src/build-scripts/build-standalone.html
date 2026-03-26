@@ -1,0 +1,96 @@
+#!/usr/bin/env node
+
+// Build script to create a standalone HTML file with everything inlined
+const fs = require('fs');
+const path = require('path');
+
+console.log('🎵 Building standalone HTML file...');
+
+// This script will inline all CSS, JS, and assets into a single HTML file
+const buildStandalone = () => {
+  const template = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Step Sequencer</title>
+    <style>
+        /* All CSS will be inlined here during build */
+        /* This ensures zero external dependencies */
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- All JavaScript will be inlined here -->
+    <script>
+        // Entire React app bundled as inline JavaScript
+        // This creates a completely self-contained file
+    </script>
+</body>
+</html>`;
+
+  console.log('✅ Standalone HTML template created');
+  console.log('📝 Next steps:');
+  console.log('   1. Run: npm run build');
+  console.log('   2. Run: node build-scripts/inline-assets.js');
+  console.log('   3. Share the generated standalone.html file');
+  
+  return template;
+};
+
+// Create inline assets processor
+const inlineAssetsScript = `#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+
+console.log('🔧 Inlining assets...');
+
+// Read the built React app
+const buildDir = path.join(__dirname, '../dist');
+const indexPath = path.join(buildDir, 'index.html');
+
+if (!fs.existsSync(indexPath)) {
+    console.error('❌ Build files not found. Run "npm run build" first.');
+    process.exit(1);
+}
+
+let html = fs.readFileSync(indexPath, 'utf8');
+
+// Inline CSS files
+const cssFiles = fs.readdirSync(buildDir).filter(file => file.endsWith('.css'));
+cssFiles.forEach(cssFile => {
+    const cssPath = path.join(buildDir, cssFile);
+    const cssContent = fs.readFileSync(cssPath, 'utf8');
+    html = html.replace(
+        \`<link rel="stylesheet" href="/\${cssFile}">\`,
+        \`<style>\${cssContent}</style>\`
+    );
+});
+
+// Inline JS files
+const jsFiles = fs.readdirSync(buildDir).filter(file => file.endsWith('.js'));
+jsFiles.forEach(jsFile => {
+    const jsPath = path.join(buildDir, jsFile);
+    const jsContent = fs.readFileSync(jsPath, 'utf8');
+    html = html.replace(
+        \`<script src="/\${jsFile}"></script>\`,
+        \`<script>\${jsContent}</script>\`
+    );
+});
+
+// Write standalone file
+const standalonePath = path.join(__dirname, '../step-sequencer-standalone.html');
+fs.writeFileSync(standalonePath, html);
+
+console.log('✅ Standalone HTML file created: step-sequencer-standalone.html');
+console.log('📁 File size:', (fs.statSync(standalonePath).size / 1024 / 1024).toFixed(2), 'MB');
+console.log('🎉 Ready to share! Just double-click the HTML file to run.');
+`;
+
+// Write the inline assets script
+fs.writeFileSync(path.join(__dirname, 'inline-assets.js'), inlineAssetsScript);
+fs.chmodSync(path.join(__dirname, 'inline-assets.js'), '755');
+
+buildStandalone();
